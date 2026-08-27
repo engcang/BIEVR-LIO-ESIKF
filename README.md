@@ -83,6 +83,74 @@
 
 <br>
 
+# Performance - degenerate environments
+
+<p align="center">
+  <img src="assets/degenerate_benchmark_overview.svg" alt="BIEVR-LIO-ESIKF and FAST-LIO2 Original degenerate-environment benchmark comparison" width="80%" />
+</p>
+
+<p align="center">
+  <img src="assets/degenerate_bievr_lio_official_comparison.svg" alt="BIEVR-LIO-ESIKF and BIEVR-LIO official degenerate-environment benchmark comparison" width="80%" />
+</p>
+
+### FAST-LIO2 Original comparison
+
++ FAST-LIO2 Original completed six of the eight sequences. It diverged on
+  `SubT MRS Hawkins Multi Floor LegRobot` and `AgriLiRa4D NJFlatC04`; runtime and
+  CPU measurements from those incomplete runs are omitted.
+
+| Sequence | FAST-LIO2 Original APE RMSE (m) | BIEVR-LIO-ESIKF APE RMSE (m) | Original runtime (ms/scan) | BIEVR-LIO-ESIKF runtime (ms/scan) | Original CPU (% one core) | BIEVR-LIO-ESIKF CPU (% one core) |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| `SubT MRS Hawkins Long Corridor RC` | 3905.4493 | **1.9227** | 3.902 | **2.724** | **28.45** | 48.07 |
+| `SubT MRS Hawkins Multi Floor LegRobot` | Failed | **0.4663** | — | **2.669** | — | 48.34 |
+| `AgriLiRa4D NJFlatB03` | 23.1101 | **2.1290** | 12.308 | **4.764** | **56.98** | 93.53 |
+| `AgriLiRa4D NJFlatC04` | Failed | **1.1413** | — | **4.108** | — | 83.22 |
+| `AgriLiRa4D NJHillB03` | 49.6606 | **2.2300** | 13.586 | **4.910** | **61.29** | 93.86 |
+| `AgriLiRa4D NJHillC03` | 130.3016 | **3.2467** | 13.879 | **4.914** | **62.50** | 94.02 |
+| `AgriLiRa4D NJTerrB04` | 11.2758 | **0.4498** | 9.501 | **3.874** | **47.19** | 76.10 |
+| `AgriLiRa4D NJTerrC05` | 14.0998 | **0.4699** | 10.337 | **4.077** | **50.01** | 79.41 |
+
+
+### BIEVR-LIO official comparison
+
++ Both implementations use validated one-run results from the same current campaign. Runtime
+  values are method-native wall-time latency: BIEVR-LIO official measures its complete
+  `processFrame` step, while BIEVR-LIO-ESIKF measures synchronized LiDAR/IMU processing through
+  odometry publication before its BIEVR-map update.
+
+| Sequence | BIEVR-LIO official APE RMSE (m) | BIEVR-LIO-ESIKF APE RMSE (m) |
+| --- | ---: | ---: |
+| `SubT MRS Hawkins Long Corridor RC` | **1.8551** | 1.9227 |
+| `SubT MRS Hawkins Multi Floor LegRobot` | 0.5000 | **0.4663** |
+| `AgriLiRa4D NJFlatB03` | 2.9902 | **2.1290** |
+| `AgriLiRa4D NJFlatC04` | **0.9588** | 1.1413 |
+| `AgriLiRa4D NJHillB03` | **1.9502** | 2.2300 |
+| `AgriLiRa4D NJHillC03` | **1.9631** | 3.2467 |
+| `AgriLiRa4D NJTerrB04` | **0.4128** | 0.4498 |
+| `AgriLiRa4D NJTerrC05` | **0.4379** | 0.4699 |
+
+
+| Sequence | Implementation | Samples (scans) | Mean runtime (ms/scan) | p50 runtime (ms/scan) | p95 runtime (ms/scan) | p99 runtime (ms/scan) |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| `SubT MRS Hawkins Long Corridor RC` | BIEVR-LIO official | 2776 | 4.027 | 3.951 | 4.910 | 5.466 |
+| `SubT MRS Hawkins Long Corridor RC` | BIEVR-LIO-ESIKF | 2774 | 2.724 | 2.707 | 3.016 | 3.721 |
+| `SubT MRS Hawkins Multi Floor LegRobot` | BIEVR-LIO official | 4137 | 4.096 | 3.909 | 5.393 | 6.164 |
+| `SubT MRS Hawkins Multi Floor LegRobot` | BIEVR-LIO-ESIKF | 4136 | 2.669 | 2.637 | 3.589 | 3.918 |
+| `AgriLiRa4D NJFlatB03` | BIEVR-LIO official | 1588 | 6.448 | 6.365 | 8.060 | 9.364 |
+| `AgriLiRa4D NJFlatB03` | BIEVR-LIO-ESIKF | 1586 | 4.764 | 4.763 | 5.834 | 6.562 |
+| `AgriLiRa4D NJFlatC04` | BIEVR-LIO official | 2787 | 5.871 | 5.747 | 7.471 | 8.738 |
+| `AgriLiRa4D NJFlatC04` | BIEVR-LIO-ESIKF | 2785 | 4.108 | 4.131 | 4.810 | 5.549 |
+| `AgriLiRa4D NJHillB03` | BIEVR-LIO official | 1675 | 6.779 | 6.695 | 8.694 | 10.141 |
+| `AgriLiRa4D NJHillB03` | BIEVR-LIO-ESIKF | 1673 | 4.910 | 4.918 | 5.830 | 6.713 |
+| `AgriLiRa4D NJHillC03` | BIEVR-LIO official | 2374 | 6.781 | 6.667 | 8.936 | 10.590 |
+| `AgriLiRa4D NJHillC03` | BIEVR-LIO-ESIKF | 2371 | 4.914 | 4.915 | 6.018 | 6.641 |
+| `AgriLiRa4D NJTerrB04` | BIEVR-LIO official | 957 | 5.366 | 5.174 | 7.439 | 8.603 |
+| `AgriLiRa4D NJTerrB04` | BIEVR-LIO-ESIKF | 955 | 3.874 | 3.651 | 5.349 | 5.647 |
+| `AgriLiRa4D NJTerrC05` | BIEVR-LIO official | 1452 | 5.626 | 5.331 | 8.202 | 9.459 |
+| `AgriLiRa4D NJTerrC05` | BIEVR-LIO-ESIKF | 1450 | 4.077 | 3.786 | 5.676 | 6.198 |
+
+<br>
+
 # Performance - non-degenerate environments
 
 <p align="center">
