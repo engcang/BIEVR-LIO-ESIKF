@@ -1,0 +1,66 @@
+exclude: >-
+    (?x)^(
+      third_party/|
+      .*/third_party/|
+      build/|
+      .*/build/|
+      install/|
+      .*/install/|
+      log/|
+      .*/log/
+    )
+
+repos:
+    - repo: https://github.com/pre-commit/pre-commit-hooks
+      rev: v5.0.0
+      hooks:
+          - id: check-yaml
+          - id: check-json
+          - id: check-xml
+          - id: check-added-large-files
+          - id: check-case-conflict
+          - id: check-merge-conflict
+          - id: end-of-file-fixer
+          - id: mixed-line-ending
+            args: [--fix=no]
+          - id: trailing-whitespace
+            args: [--markdown-linebreak-ext=md]
+
+    - repo: https://github.com/pre-commit/mirrors-clang-format
+      rev: v19.1.2
+      hooks:
+          - id: clang-format
+            name: clang-format including registered point schemas
+            files: '\.(c|cc|cpp|cxx|h|hh|hpp|hxx)$'
+
+    - repo: https://github.com/cpplint/cpplint
+      rev: "2.0.0"
+      hooks:
+          - id: cpplint
+            name: cpplint-headers
+            args:
+                - "--filter=-whitespace/indent,-whitespace/braces,-whitespace/comments,-whitespace/line_length,-whitespace/newline,-build/include_subdir,-build/header_guard,-build/include_order,-build/c++17,-build/namespaces,-readability/braces,-readability/todo,-legal/copyright,-runtime/references"
+            files: '\.(h|hh|hpp|hxx)$'
+          - id: cpplint
+            name: cpplint-sources
+            args:
+                - "--filter=-whitespace/indent,-whitespace/braces,-whitespace/comments,-whitespace/line_length,-whitespace/newline,-build/include_subdir,-build/header_guard,-build/include_order,-build/c++17,-build/namespaces,-build/include_what_you_use,-readability/braces,-readability/todo,-legal/copyright,-runtime/references"
+            files: '\.(c|cc|cpp|cxx)$'
+
+    - repo: local
+      hooks:
+          - id: explicit-std-qualification
+            name: require explicit std qualification
+            entry: '^\s*(?:using\s+(?:namespace\s+std(?:::|;)|std::)|namespace\s+[A-Za-z_][A-Za-z0-9_]*\s*=\s*std::)'
+            language: pygrep
+            files: '\.(c|cc|cpp|cxx|h|hh|hpp|hxx)$'
+          - id: python-collection-first-element
+            name: keep the first Python collection element after its delimiter
+            entry: '\(\[[ \t]*$'
+            language: pygrep
+            files: '\.py$'
+          - id: no-tabs
+            name: disallow tabs in first-party text files
+            entry: '\t'
+            language: pygrep
+            types: [text]

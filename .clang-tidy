@@ -1,0 +1,33 @@
+#Codex: Macro tuple layout is formatting-only and is enforced by clang-format through pre-commit.
+Checks: '-*,google-build-using-namespace,readability-identifier-naming'
+WarningsAsErrors: 'google-build-using-namespace,readability-identifier-naming'
+HeaderFilterRegex: '.*/(include|src)/[^/]+$'
+CheckOptions:
+  - key: readability-identifier-naming.ClassCase
+    value: CamelCase
+  - key: readability-identifier-naming.StructCase
+    value: CamelCase
+  - key: readability-identifier-naming.EnumCase
+    value: CamelCase
+  - key: readability-identifier-naming.EnumConstantCase
+    value: UPPER_CASE
+  - key: readability-identifier-naming.FunctionCase
+    value: camelBack
+  - key: readability-identifier-naming.MethodCase
+    value: camelBack
+  - key: readability-identifier-naming.ParameterCase
+    value: lower_case
+  - key: readability-identifier-naming.ParameterPrefix
+    value: _
+  - key: readability-identifier-naming.LocalVariableCase
+    value: lower_case
+  - key: readability-identifier-naming.MemberCase
+    value: lower_case
+  - key: readability-identifier-naming.MemberSuffix
+    value: _
+  - key: readability-identifier-naming.PublicMemberCase
+    value: lower_case
+  - key: readability-identifier-naming.PublicMemberSuffix
+    value: _
+  - key: readability-identifier-naming.PublicMemberIgnoredRegexp
+    value: '^(x|y|z|intensity|time|ring|t|reflectivity|ambient|range)$'

@@ -1,0 +1,50 @@
+common:
+    lidar_topic: "/livox/lidar"
+    imu_topic: "/livox/imu"
+    map_frame: "map"
+    odometry_frame: "odom"
+
+filter:
+    maximum_iterations: 4
+
+preprocess:
+    lidar_type: 1
+    scan_line_count: 4
+    min_range: 0.5
+    point_timestamp_unit: 2           # 0-second, 1-millisecond, 2-microsecond, 3-nanosecond.
+    scan_rate_hz: 10               # LiDAR scan rate in Hz.
+    point_stride: 2
+    voxel_resolution: 0.1
+
+mapping:
+    accelerometer_covariance: 0.1
+    gyroscope_covariance: 0.1
+    accelerometer_bias_covariance: 0.0001
+    gyroscope_bias_covariance: 0.0001
+    lidar_to_imu_translation: [-0.011, -0.02329, 0.04412]
+    lidar_to_imu_rotation: [1, 0, 0,
+                            0, 1, 0,
+                            0, 0, 1]
+
+# Disabled runtime measurement does not call the clock or allocate per scan.
+runtime:
+    enabled: false
+    output_path: "runtime.csv"
+
+publish:
+    path_en: true
+    scan_publish_en: true       # false disables the registered point-cloud output.
+    dense_publish_en: true      # false publishes a downsampled registered cloud.
+    scan_bodyframe_pub_en: false # true publishes scans in the IMU body frame.
+
+# BIEVR oriented height-image map and informed sampling settings.
+bievr:
+    voxel_size: 0.5
+    pixel_size: 0.05
+    normal_tolerance_degrees: 3.0
+    smooth_image: true
+    use_range_weight: true
+    maximum_voxel_count: 1500000
+    informed_sampling_enabled: true
+    informed_voxel_count: 300
+    huber_delta: 0.1

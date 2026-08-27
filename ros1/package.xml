@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>bievr_lio_esikf</name>
+  <version>0.1.0</version>
+  <description>ROS1 adapter for the BIEVR measurement model tightly coupled to an Eigen-only iterated ESIKF.</description>
+  <maintainer email="eungchang_mason@kaist.ac.kr">Eungchang Mason Lee</maintainer>
+  <license>GPL-2.0-only</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>eigen</depend>
+  <depend>geometry_msgs</depend>
+  <depend>livox_ros_driver</depend>
+  <depend>nav_msgs</depend>
+  <depend>pcl_conversions</depend>
+  <depend>roscpp</depend>
+  <exec_depend>rviz</exec_depend>
+  <depend>sensor_msgs</depend>
+  <depend>tf2_ros</depend>
+  <depend>tbb</depend>
+</package>

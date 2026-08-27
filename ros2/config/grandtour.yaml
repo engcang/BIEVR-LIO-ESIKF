@@ -1,0 +1,52 @@
+laser_mapping:
+    ros__parameters:
+        common:
+            lidar_topic: "/boxi/hesai/points"
+            imu_topic: "/boxi/stim320/imu"
+            map_frame: "map"
+            odometry_frame: "odom"
+
+        filter:
+            maximum_iterations: 3
+
+        preprocess:
+            lidar_type: 5 # 5 selects Hesai PointCloud2 with an absolute float64 timestamp field.
+            scan_line_count: 32
+            scan_rate_hz: 10
+            point_stride: 1
+            voxel_resolution: 0.1
+            point_timestamp_unit: 0 # The Hesai converter reads its absolute timestamp field directly.
+            min_range: 0.5
+
+        mapping:
+            accelerometer_covariance: 0.1
+            gyroscope_covariance: 0.1
+            accelerometer_bias_covariance: 0.0001
+            gyroscope_bias_covariance: 0.0001
+            lidar_to_imu_translation: [0.01703893451834826, -0.025798279201361615, 0.17135095912642273]
+            lidar_to_imu_rotation: [-0.0038851755694485467, -0.9999888796051097, 0.0026732147147921085,
+                                    0.9999924503430049, -0.003885344318275846, -0.00005793549097738286,
+                                    0.00006832120631549819, 0.002672969443383787, 0.9999964252768944]
+
+        # Disabled runtime measurement does not call the clock or allocate per scan.
+        runtime:
+            enabled: false
+            output_path: "runtime.csv"
+
+        publish:
+            path_en: true
+            scan_publish_en: true # False closes all point-cloud output.
+            dense_publish_en: true # False reduces the number of points in the global-frame scan.
+            scan_bodyframe_pub_en: false # True publishes point-cloud scans in the IMU body frame.
+
+        # BIEVR oriented height-image map and informed sampling settings.
+        bievr:
+            voxel_size: 0.5
+            pixel_size: 0.05
+            normal_tolerance_degrees: 3.0
+            smooth_image: true
+            use_range_weight: true
+            maximum_voxel_count: 1500000
+            informed_sampling_enabled: true
+            informed_voxel_count: 300
+            huber_delta: 0.1

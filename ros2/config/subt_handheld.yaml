@@ -1,0 +1,52 @@
+laser_mapping:
+    ros__parameters:
+        common:
+            lidar_topic: "/velodyne_points"
+            imu_topic: "/imu/data"
+            map_frame: "map"
+            odometry_frame: "odom"
+
+        filter:
+            maximum_iterations: 3
+
+        preprocess:
+            lidar_type: 2 # 1 for Livox serials LiDAR, 2 for Velodyne-compatible LiDAR, 3 for Ouster LiDAR.
+            scan_line_count: 16
+            scan_rate_hz: 10
+            point_stride: 1
+            voxel_resolution: 0.1
+            point_timestamp_unit: 3 # 0-second, 1-millisecond, 2-microsecond, 3-nanosecond.
+            min_range: 0.5
+
+        mapping:
+            accelerometer_covariance: 0.1
+            gyroscope_covariance: 0.1
+            accelerometer_bias_covariance: 0.0001
+            gyroscope_bias_covariance: 0.0001
+            lidar_to_imu_translation: [0.08, 0.029, 0.03]
+            lidar_to_imu_rotation: [1.0, 0.0, 0.0,
+                                    0.0, 1.0, 0.0,
+                                    0.0, 0.0, 1.0]
+
+        # Disabled runtime measurement does not call the clock or allocate per scan.
+        runtime:
+            enabled: false
+            output_path: "runtime.csv"
+
+        publish:
+            path_en: true
+            scan_publish_en: true # False closes all point-cloud output.
+            dense_publish_en: true # False reduces the number of points in the global-frame scan.
+            scan_bodyframe_pub_en: false # True publishes point-cloud scans in the IMU body frame.
+
+        # BIEVR oriented height-image map and informed sampling settings.
+        bievr:
+            voxel_size: 0.5
+            pixel_size: 0.05
+            normal_tolerance_degrees: 3.0
+            smooth_image: true
+            use_range_weight: true
+            maximum_voxel_count: 1500000
+            informed_sampling_enabled: true
+            informed_voxel_count: 300
+            huber_delta: 0.1

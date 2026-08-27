@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="config_file" default="mid360.yaml" />
+    <arg name="rviz" default="false" />
+
+    <!-- run -->
+    <node pkg="bievr_lio_esikf"
+          type="bievr_lio_esikf_mapping"
+          name="laser_mapping"
+          output="screen">
+        <rosparam command="load" file="$(find bievr_lio_esikf)/config/$(arg config_file)" />
+    </node>
+
+    <!-- visualize -->
+    <group if="$(arg rviz)">
+        <node pkg="rviz"
+              type="rviz"
+              name="rviz"
+              args="-d $(find bievr_lio_esikf)/ros1/rviz.rviz" />
+    </group>
+</launch>
