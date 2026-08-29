@@ -10,12 +10,12 @@ laser_mapping:
             maximum_iterations: 3
 
         preprocess:
-            lidar_type: 6 #Codex: Select the native RoboSense float64 timestamp adapter.
+            lidar_type: 6 # Select the native RoboSense float64 timestamp adapter.
             scan_line_count: 96
             scan_rate_hz: 10
             point_stride: 1
             voxel_resolution: 0.1
-            point_timestamp_unit: 0 #Codex: RoboSense timestamps are seconds and are normalized within each scan.
+            point_timestamp_unit: 0 # RoboSense timestamps are seconds and are normalized within each scan.
             min_range: 2.0
 
         mapping:

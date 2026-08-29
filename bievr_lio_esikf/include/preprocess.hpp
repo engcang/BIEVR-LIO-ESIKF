@@ -96,9 +96,9 @@ namespace robosense
     struct EIGEN_ALIGN16 Point
     {
         PCL_ADD_POINT4D;
-        float intensity;        //Codex: NOLINT(readability-identifier-naming) PCL schema field.
-        std::uint16_t ring = 0; //Codex: NOLINT(readability-identifier-naming) PCL schema field.
-        double timestamp = 0.0; //Codex: NOLINT(readability-identifier-naming) PCL schema field in seconds.
+        float intensity;        // NOLINT(readability-identifier-naming) PCL schema field.
+        std::uint16_t ring = 0; // NOLINT(readability-identifier-naming) PCL schema field.
+        double timestamp = 0.0; // NOLINT(readability-identifier-naming) PCL schema field in seconds.
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     };
 } // namespace robosense

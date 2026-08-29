@@ -210,34 +210,12 @@ inline void RosConverter::robosenseHandler(const sensor_msgs::msg::PointCloud2::
         return;
     }
 
-    double reference_timestamp = 0.0;
-    bool has_finite_timestamp = false;
-    for (const robosense::Point &input_point : original_cloud.points)
-    {
-        if (std::isfinite(input_point.timestamp))
-        {
-            reference_timestamp = input_point.timestamp;
-            has_finite_timestamp = true;
-            break;
-        }
-    }
-    if (!has_finite_timestamp)
-    {
-        return;
-    }
-
-    constexpr double timestamp_wrap_period_seconds = 3600.0;
-    const auto unwrap_timestamp = [reference_timestamp, timestamp_wrap_period_seconds](const double _timestamp)
-    {
-        return _timestamp + std::round((reference_timestamp - _timestamp) / timestamp_wrap_period_seconds) * timestamp_wrap_period_seconds;
-    };
-
     double minimum_timestamp = std::numeric_limits<double>::infinity();
     for (const robosense::Point &input_point : original_cloud.points)
     {
         if (std::isfinite(input_point.timestamp))
         {
-            minimum_timestamp = std::min(minimum_timestamp, unwrap_timestamp(input_point.timestamp));
+            minimum_timestamp = std::min(minimum_timestamp, input_point.timestamp);
         }
     }
     if (!std::isfinite(minimum_timestamp))
@@ -263,7 +241,7 @@ inline void RosConverter::robosenseHandler(const sensor_msgs::msg::PointCloud2::
             continue;
         }
 
-        const double relative_time_seconds = unwrap_timestamp(input_point.timestamp) - minimum_timestamp;
+        const double relative_time_seconds = input_point.timestamp - minimum_timestamp;
         if (!std::isfinite(relative_time_seconds) ||
             relative_time_seconds < 0.0 ||
             relative_time_seconds > maximum_relative_time_seconds)
