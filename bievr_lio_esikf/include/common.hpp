@@ -38,7 +38,8 @@ enum LidarType
     VELODYNE,
     OUSTER,
     MARSIM,
-    HESAI
+    HESAI,
+    ROBOSENSE
 };
 
 struct MeasureGroup // Lidar data and imu dates for the curent process

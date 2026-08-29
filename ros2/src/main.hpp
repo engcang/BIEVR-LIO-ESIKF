@@ -133,6 +133,22 @@ private:
         return static_cast<double>(_stamp.sec) + static_cast<double>(_stamp.nanosec) * 1.0e-9;
     }
 
+    static double maximumPointTimeSeconds(const LidarPointCloud &_cloud)
+    {
+        double maximum_point_time_milliseconds = 0.0;
+        for (const LidarPoint &point : _cloud.points)
+        {
+            const double point_time_milliseconds = static_cast<double>(point.curvature);
+            if (std::isfinite(point_time_milliseconds) &&
+                point_time_milliseconds >= 0.0)
+            {
+                maximum_point_time_milliseconds = std::max(maximum_point_time_milliseconds,
+                                                           point_time_milliseconds);
+            }
+        }
+        return maximum_point_time_milliseconds / 1.0e3;
+    }
+
     void configureSensorQos()
     {
         const char *reliable_sensor_qos = std::getenv("LIO_BENCHMARK_RELIABLE_SENSOR_QOS");
@@ -243,21 +259,22 @@ private:
             _meas.lidar_measured_ = lidar_buffer_.front();
             _meas.lidar_beg_time_ = time_buffer_.front();
 
+            const double scan_duration_seconds = maximumPointTimeSeconds(*_meas.lidar_measured_);
 
             if (_meas.lidar_measured_->points.size() <= 1) // time too little
             {
                 lidar_end_time_ = _meas.lidar_beg_time_ + lidar_mean_scantime_;
                 RCLCPP_WARN(rclcpp::get_logger("bievr_lio_esikf"), "Too few input point cloud!");
             }
-            else if (_meas.lidar_measured_->points.back().curvature / static_cast<double>(1000) < 0.5 * lidar_mean_scantime_)
+            else if (scan_duration_seconds < 0.5 * lidar_mean_scantime_)
             {
                 lidar_end_time_ = _meas.lidar_beg_time_ + lidar_mean_scantime_;
             }
             else
             {
                 count_lidar_scan_++;
-                lidar_end_time_ = _meas.lidar_beg_time_ + _meas.lidar_measured_->points.back().curvature / static_cast<double>(1000);
-                lidar_mean_scantime_ += (_meas.lidar_measured_->points.back().curvature / static_cast<double>(1000) - lidar_mean_scantime_) / count_lidar_scan_;
+                lidar_end_time_ = _meas.lidar_beg_time_ + scan_duration_seconds;
+                lidar_mean_scantime_ += (scan_duration_seconds - lidar_mean_scantime_) / count_lidar_scan_;
             }
             if (lidar_type_ == MARSIM)
                 lidar_end_time_ = _meas.lidar_beg_time_;
@@ -576,7 +593,7 @@ public:
                                                  points_preprocessor_->point_stride_ > 0 &&
                                                  points_preprocessor_->scan_channels_ > 0 &&
                                                  points_preprocessor_->scan_rate_ > 0 &&
-                                                 lidar_type_ >= LIVOX && lidar_type_ <= HESAI &&
+                                                 lidar_type_ >= LIVOX && lidar_type_ <= ROBOSENSE &&
                                                  points_preprocessor_->point_timestamp_unit_ >= SEC && points_preprocessor_->point_timestamp_unit_ <= NS &&
                                                  std::isfinite(gyroscope_covariance_) && gyroscope_covariance_ > 0.0 &&
                                                  std::isfinite(accelerometer_covariance_) && accelerometer_covariance_ > 0.0 &&

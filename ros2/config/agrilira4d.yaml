@@ -1,0 +1,50 @@
+laser_mapping:
+    ros__parameters:
+        common:
+            lidar_topic: "/rslidar_points"
+            imu_topic: "/rslidar_imu_data"
+            map_frame: "map"
+            odometry_frame: "odom"
+
+        filter:
+            maximum_iterations: 3
+
+        preprocess:
+            lidar_type: 6 #Codex: Select the native RoboSense float64 timestamp adapter.
+            scan_line_count: 96
+            scan_rate_hz: 10
+            point_stride: 1
+            voxel_resolution: 0.1
+            point_timestamp_unit: 0 #Codex: RoboSense timestamps are seconds and are normalized within each scan.
+            min_range: 2.0
+
+        mapping:
+            accelerometer_covariance: 0.1
+            gyroscope_covariance: 0.1
+            accelerometer_bias_covariance: 0.0001
+            gyroscope_bias_covariance: 0.0001
+            lidar_to_imu_translation: [0.00425, 0.00418, -0.00446]
+            lidar_to_imu_rotation: [0.0, -1.0, 0.0,
+                                    -1.0, 0.0, 0.0,
+                                    0.0, 0.0, -1.0]
+
+        runtime:
+            enabled: false
+            output_path: "runtime.raw.csv"
+
+        publish:
+            path_en: false
+            scan_publish_en: false
+            dense_publish_en: false
+            scan_bodyframe_pub_en: false
+
+        bievr:
+            voxel_size: 0.5
+            pixel_size: 0.05
+            normal_tolerance_degrees: 3.0
+            smooth_image: true
+            use_range_weight: true
+            maximum_voxel_count: 1500000
+            informed_sampling_enabled: true
+            informed_voxel_count: 300
+            huber_delta: 0.1

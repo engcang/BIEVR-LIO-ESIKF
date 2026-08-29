@@ -91,6 +91,29 @@ POINT_CLOUD_REGISTER_POINT_STRUCT(
     (double, timestamp, timestamp))
 //clang-format on
 
+namespace robosense
+{
+    struct EIGEN_ALIGN16 Point
+    {
+        PCL_ADD_POINT4D;
+        float intensity;        //Codex: NOLINT(readability-identifier-naming) PCL schema field.
+        std::uint16_t ring = 0; //Codex: NOLINT(readability-identifier-naming) PCL schema field.
+        double timestamp = 0.0; //Codex: NOLINT(readability-identifier-naming) PCL schema field in seconds.
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    };
+} // namespace robosense
+
+//clang-format off
+POINT_CLOUD_REGISTER_POINT_STRUCT(
+    robosense::Point,
+    (float, x, x)
+    (float, y, y)
+    (float, z, z)
+    (float, intensity, intensity)
+    (std::uint16_t, ring, ring)
+    (double, timestamp, timestamp))
+//clang-format on
+
 class Preprocess
 {
 public:
