@@ -748,10 +748,10 @@ public:
 
                 /******* Publish odometry *******/
                 publishOdometry(pub_odom_aft_mapped);
-                runtime_measurement.finish();
 
                 /*** add the registered full scan to the BIEVR map ***/
                 updateMap();
+                runtime_measurement.finish();
 
                 /******* Publish points *******/
                 if (path_enabled_)
