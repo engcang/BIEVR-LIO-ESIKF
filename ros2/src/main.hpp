@@ -433,6 +433,8 @@ private:
         jjj++;
         if (jjj % 10 == 0)
         {
+            // RViz transforms the whole path using this header's timestamp.
+            lio_path_.header = body_pose_message_.header;
             lio_path_.poses.push_back(body_pose_message_);
             _pub_path->publish(lio_path_);
         }
@@ -624,9 +626,6 @@ public:
                     sampling_parameters_.informed_voxel_count_);
 
         points_preprocessor_->lidar_type_ = lidar_type_;
-
-        lio_path_.header.stamp = node->now();
-        lio_path_.header.frame_id = odometry_frame_;
 
 
         Eigen::Vector3d lidar_to_imu_translation;
