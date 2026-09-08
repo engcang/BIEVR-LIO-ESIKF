@@ -269,40 +269,38 @@ public:
 
         const double inverse_voxel_size = 1.0 / _voxel_size;
         std::vector<DownsampleEntry> entries(_input.size());
-        //clang-format off
         tbb::parallel_for(tbb::blocked_range<std::size_t>(0U, _input.size()),
                           [&_input, _voxel_size, inverse_voxel_size, &entries](const tbb::blocked_range<std::size_t> &_range)
-                          {
-                              for (std::size_t index = _range.begin(); index != _range.end(); ++index)
-                              {
-                                  const pcl::PointXYZINormal &point = _input.points[index];
-                                  const Eigen::Vector3d position(point.x, point.y, point.z);
-                                  const BievrVoxelKey key{static_cast<std::int32_t>(std::floor(position.x() * inverse_voxel_size)),
-                                                          static_cast<std::int32_t>(std::floor(position.y() * inverse_voxel_size)),
-                                                          static_cast<std::int32_t>(std::floor(position.z() * inverse_voxel_size))};
-                                  const Eigen::Vector3d center = _voxel_size * Eigen::Vector3d(static_cast<double>(key.x_) + 0.5,
-                                                                                               static_cast<double>(key.y_) + 0.5,
-                                                                                               static_cast<double>(key.z_) + 0.5);
-                                  entries[index] = {key, index, (position - center).squaredNorm()};
-                              }
-                          });
-        //clang-format on
+        {
+            for (std::size_t index = _range.begin(); index != _range.end(); ++index)
+            {
+                const pcl::PointXYZINormal &point = _input.points[index];
+                const Eigen::Vector3d position(point.x, point.y, point.z);
+                const BievrVoxelKey key{static_cast<std::int32_t>(std::floor(position.x() * inverse_voxel_size)),
+                                        static_cast<std::int32_t>(std::floor(position.y() * inverse_voxel_size)),
+                                        static_cast<std::int32_t>(std::floor(position.z() * inverse_voxel_size))};
+                const Eigen::Vector3d center = _voxel_size * Eigen::Vector3d(static_cast<double>(key.x_) + 0.5,
+                                                                             static_cast<double>(key.y_) + 0.5,
+                                                                             static_cast<double>(key.z_) + 0.5);
+                entries[index] = {key, index, (position - center).squaredNorm()};
+            }
+        });
 
         tbb::parallel_sort(entries.begin(),
                            entries.end(),
                            [](const DownsampleEntry &_left, const DownsampleEntry &_right)
-                           {
-                               return std::tuple(_left.key_.x_,
-                                                 _left.key_.y_,
-                                                 _left.key_.z_,
-                                                 _left.squared_distance_,
-                                                 _left.point_index_) <
-                                      std::tuple(_right.key_.x_,
-                                                 _right.key_.y_,
-                                                 _right.key_.z_,
-                                                 _right.squared_distance_,
-                                                 _right.point_index_);
-                           });
+        {
+            return std::tuple(_left.key_.x_,
+                              _left.key_.y_,
+                              _left.key_.z_,
+                              _left.squared_distance_,
+                              _left.point_index_) <
+                   std::tuple(_right.key_.x_,
+                              _right.key_.y_,
+                              _right.key_.z_,
+                              _right.squared_distance_,
+                              _right.point_index_);
+        });
 
         std::vector<std::size_t> selected_indices;
         selected_indices.reserve(entries.size());
@@ -315,16 +313,14 @@ public:
         }
 
         _output.resize(selected_indices.size());
-        //clang-format off
         tbb::parallel_for(tbb::blocked_range<std::size_t>(0U, selected_indices.size()),
                           [&_input, &_output, &selected_indices](const tbb::blocked_range<std::size_t> &_range)
-                          {
-                              for (std::size_t index = _range.begin(); index != _range.end(); ++index)
-                              {
-                                  _output.points[index] = _input.points[selected_indices[index]];
-                              }
-                          });
-        //clang-format on
+        {
+            for (std::size_t index = _range.begin(); index != _range.end(); ++index)
+            {
+                _output.points[index] = _input.points[selected_indices[index]];
+            }
+        });
     }
 
     void update(const pcl::PointCloud<pcl::PointXYZINormal> &_points_world,
@@ -340,36 +336,34 @@ public:
         }
 
         std::vector<HashedPoint> hashed_points(_points_world.size());
-        //clang-format off
         tbb::parallel_for(tbb::blocked_range<std::size_t>(0U, _points_world.size()),
                           [this, &_points_world, _ranges, &hashed_points](const tbb::blocked_range<std::size_t> &_range)
-                          {
-                              for (std::size_t index = _range.begin(); index != _range.end(); ++index)
-                              {
-                                  const pcl::PointXYZINormal &point = _points_world.points[index];
-                                  hashed_points[index].point_ << point.x,
-                                      point.y,
-                                      point.z,
-                                      _ranges == nullptr ? 1.0 : (*_ranges)[index];
-                                  hashed_points[index].key_ = pointToKey(hashed_points[index].point_.head<3>());
-                              }
-                          });
-        //clang-format on
+        {
+            for (std::size_t index = _range.begin(); index != _range.end(); ++index)
+            {
+                const pcl::PointXYZINormal &point = _points_world.points[index];
+                hashed_points[index].point_ << point.x,
+                    point.y,
+                    point.z,
+                    _ranges == nullptr ? 1.0 : (*_ranges)[index];
+                hashed_points[index].key_ = pointToKey(hashed_points[index].point_.head<3>());
+            }
+        });
 
         tbb::parallel_sort(hashed_points.begin(),
                            hashed_points.end(),
                            [](const HashedPoint &_left, const HashedPoint &_right)
-                           {
-                               const auto left_key = std::tuple(_left.key_.x_,
-                                                                _left.key_.y_,
-                                                                _left.key_.z_,
-                                                                _left.point_.x());
-                               const auto right_key = std::tuple(_right.key_.x_,
-                                                                 _right.key_.y_,
-                                                                 _right.key_.z_,
-                                                                 _right.point_.x());
-                               return left_key < right_key;
-                           });
+        {
+            const auto left_key = std::tuple(_left.key_.x_,
+                                             _left.key_.y_,
+                                             _left.key_.z_,
+                                             _left.point_.x());
+            const auto right_key = std::tuple(_right.key_.x_,
+                                              _right.key_.y_,
+                                              _right.key_.z_,
+                                              _right.point_.x());
+            return left_key < right_key;
+        });
 
         std::vector<std::size_t> group_starts;
         group_starts.reserve(hashed_points.size());
@@ -390,47 +384,45 @@ public:
         }
 
         std::vector<typename VoxelMap::iterator> voxel_iterators(group_starts.size());
-        //clang-format off
         tbb::parallel_for(tbb::blocked_range<std::size_t>(0U, group_starts.size()),
                           [this, &hashed_points, &group_starts, &voxel_iterators](const tbb::blocked_range<std::size_t> &_range)
-                          {
-                              std::vector<Eigen::Vector4d> voxel_points;
-                              for (std::size_t group_index = _range.begin(); group_index != _range.end(); ++group_index)
-                              {
-                                  const std::size_t begin = group_starts[group_index];
-                                  const std::size_t end = group_index + 1U < group_starts.size() ? group_starts[group_index + 1U] : hashed_points.size();
-                                  auto iterator = voxels_.find(hashed_points[begin].key_);
-                                  voxel_iterators[group_index] = iterator;
-                                  BievrVoxel &voxel = iterator->second.voxel_;
+        {
+            std::vector<Eigen::Vector4d> voxel_points;
+            for (std::size_t group_index = _range.begin(); group_index != _range.end(); ++group_index)
+            {
+                const std::size_t begin = group_starts[group_index];
+                const std::size_t end = group_index + 1U < group_starts.size() ? group_starts[group_index + 1U] : hashed_points.size();
+                auto iterator = voxels_.find(hashed_points[begin].key_);
+                voxel_iterators[group_index] = iterator;
+                BievrVoxel &voxel = iterator->second.voxel_;
 
-                                  voxel_points.clear();
-                                  voxel_points.reserve(end - begin);
-                                  for (std::size_t index = begin; index < end; ++index)
-                                  {
-                                      const Eigen::Vector3d point = hashed_points[index].point_.head<3>();
-                                      ++voxel.point_count_;
-                                      const Eigen::Vector3d mean_delta = point - voxel.mean_;
-                                      voxel.mean_ += mean_delta / static_cast<double>(voxel.point_count_);
-                                      voxel.centered_outer_sum_.noalias() += mean_delta * (point - voxel.mean_).transpose();
-                                      voxel_points.push_back(hashed_points[index].point_);
-                                  }
+                voxel_points.clear();
+                voxel_points.reserve(end - begin);
+                for (std::size_t index = begin; index < end; ++index)
+                {
+                    const Eigen::Vector3d point = hashed_points[index].point_.head<3>();
+                    ++voxel.point_count_;
+                    const Eigen::Vector3d mean_delta = point - voxel.mean_;
+                    voxel.mean_ += mean_delta / static_cast<double>(voxel.point_count_);
+                    voxel.centered_outer_sum_.noalias() += mean_delta * (point - voxel.mean_).transpose();
+                    voxel_points.push_back(hashed_points[index].point_);
+                }
 
-                                  const bool was_observed = voxel.observed_;
-                                  const bool normal_changed = updateNormal(voxel);
-                                  if (!was_observed && voxel.observed_)
-                                  {
-                                      voxel_points.insert(voxel_points.end(), voxel.pending_points_.begin(), voxel.pending_points_.end());
-                                      voxel.pending_points_.clear();
-                                      voxel.pending_points_.shrink_to_fit();
-                                  }
-                                  else if (!voxel.observed_)
-                                  {
-                                      voxel.pending_points_.insert(voxel.pending_points_.end(), voxel_points.begin(), voxel_points.end());
-                                  }
-                                  updateBumpImage(voxel_points, voxel, normal_changed);
-                              }
-                          });
-        //clang-format on
+                const bool was_observed = voxel.observed_;
+                const bool normal_changed = updateNormal(voxel);
+                if (!was_observed && voxel.observed_)
+                {
+                    voxel_points.insert(voxel_points.end(), voxel.pending_points_.begin(), voxel.pending_points_.end());
+                    voxel.pending_points_.clear();
+                    voxel.pending_points_.shrink_to_fit();
+                }
+                else if (!voxel.observed_)
+                {
+                    voxel.pending_points_.insert(voxel.pending_points_.end(), voxel_points.begin(), voxel_points.end());
+                }
+                updateBumpImage(voxel_points, voxel, normal_changed);
+            }
+        });
 
         for (const auto &iterator : voxel_iterators)
         {
@@ -460,27 +452,25 @@ public:
         }
 
         std::vector<SamplingEntry> entries(_fine_points.size());
-        //clang-format off
         tbb::parallel_for(tbb::blocked_range<std::size_t>(0U, _fine_points.size()),
                           [this, &_fine_points, &_rotation_world_from_imu, &_position_world_from_imu, &_rotation_imu_from_lidar, &_position_imu_from_lidar, &entries](const tbb::blocked_range<std::size_t> &_range)
-                          {
-                              for (std::size_t index = _range.begin(); index != _range.end(); ++index)
-                              {
-                                  const pcl::PointXYZINormal &point = _fine_points.points[index];
-                                  const Eigen::Vector3d point_lidar(point.x, point.y, point.z);
-                                  const Eigen::Vector3d point_world = _rotation_world_from_imu * (_rotation_imu_from_lidar * point_lidar + _position_imu_from_lidar) + _position_world_from_imu;
-                                  entries[index] = {pointToKey(point_world), index};
-                              }
-                          });
-        //clang-format on
+        {
+            for (std::size_t index = _range.begin(); index != _range.end(); ++index)
+            {
+                const pcl::PointXYZINormal &point = _fine_points.points[index];
+                const Eigen::Vector3d point_lidar(point.x, point.y, point.z);
+                const Eigen::Vector3d point_world = _rotation_world_from_imu * (_rotation_imu_from_lidar * point_lidar + _position_imu_from_lidar) + _position_world_from_imu;
+                entries[index] = {pointToKey(point_world), index};
+            }
+        });
 
         tbb::parallel_sort(entries.begin(),
                            entries.end(),
                            [](const SamplingEntry &_left, const SamplingEntry &_right)
-                           {
-                               return std::tie(_left.key_.x_, _left.key_.y_, _left.key_.z_, _left.point_index_) <
-                                      std::tie(_right.key_.x_, _right.key_.y_, _right.key_.z_, _right.point_index_);
-                           });
+        {
+            return std::tie(_left.key_.x_, _left.key_.y_, _left.key_.z_, _left.point_index_) <
+                   std::tie(_right.key_.x_, _right.key_.y_, _right.key_.z_, _right.point_index_);
+        });
 
         std::vector<VoxelScore> scores;
         scores.reserve(entries.size());
@@ -499,14 +489,14 @@ public:
         tbb::parallel_sort(scores.begin(),
                            scores.end(),
                            [](const VoxelScore &_left, const VoxelScore &_right)
-                           {
-                               if (_left.score_ != _right.score_)
-                               {
-                                   return _left.score_ > _right.score_;
-                               }
-                               return std::tie(_left.key_.x_, _left.key_.y_, _left.key_.z_) <
-                                      std::tie(_right.key_.x_, _right.key_.y_, _right.key_.z_);
-                           });
+        {
+            if (_left.score_ != _right.score_)
+            {
+                return _left.score_ > _right.score_;
+            }
+            return std::tie(_left.key_.x_, _left.key_.y_, _left.key_.z_) <
+                   std::tie(_right.key_.x_, _right.key_.y_, _right.key_.z_);
+        });
 
         const std::size_t informed_count = std::min(_sampling.informed_voxel_count_, scores.size());
         ankerl::unordered_dense::set<BievrVoxelKey, BievrVoxelKeyHash> informed_keys;
@@ -531,16 +521,14 @@ public:
         }
 
         _selected_points.resize(selected_indices.size());
-        //clang-format off
         tbb::parallel_for(tbb::blocked_range<std::size_t>(0U, selected_indices.size()),
                           [&_fine_points, &_selected_points, &selected_indices](const tbb::blocked_range<std::size_t> &_range)
-                          {
-                              for (std::size_t index = _range.begin(); index != _range.end(); ++index)
-                              {
-                                  _selected_points.points[index] = _fine_points.points[selected_indices[index]];
-                              }
-                          });
-        //clang-format on
+        {
+            for (std::size_t index = _range.begin(); index != _range.end(); ++index)
+            {
+                _selected_points.points[index] = _fine_points.points[selected_indices[index]];
+            }
+        });
     }
 
 private:

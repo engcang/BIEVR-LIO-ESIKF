@@ -312,20 +312,18 @@ private:
         const int point_count = static_cast<int>(points_undistorted_lidar_->size());
         points_world_->resize(point_count);
         point_ranges_.resize(point_count);
-        //clang-format off
         tbb::parallel_for(tbb::blocked_range<int>(0, point_count),
                           [this](const tbb::blocked_range<int> &_range)
-                          {
-                              for (int index = _range.begin(); index != _range.end(); ++index)
-                              {
-                                  const LidarPoint &point_lidar = points_undistorted_lidar_->points[index];
-                                  pointLidarToWorld(&point_lidar, &points_world_->points[index]);
-                                  point_ranges_[index] = std::sqrt(static_cast<double>(point_lidar.x) * point_lidar.x +
-                                                                   static_cast<double>(point_lidar.y) * point_lidar.y +
-                                                                   static_cast<double>(point_lidar.z) * point_lidar.z);
-                              }
-                          });
-        //clang-format on
+        {
+            for (int index = _range.begin(); index != _range.end(); ++index)
+            {
+                const LidarPoint &point_lidar = points_undistorted_lidar_->points[index];
+                pointLidarToWorld(&point_lidar, &points_world_->points[index]);
+                point_ranges_[index] = std::sqrt(static_cast<double>(point_lidar.x) * point_lidar.x +
+                                                 static_cast<double>(point_lidar.y) * point_lidar.y +
+                                                 static_cast<double>(point_lidar.z) * point_lidar.z);
+            }
+        });
 
         bievr_map_.update(*points_world_, &point_ranges_);
     }
@@ -449,33 +447,31 @@ private:
         point_measurements_.resize(num_measurement_points_);
         points_voxel_lidar_effective_->resize(num_measurement_points_);
 
-        //clang-format off
         tbb::parallel_for(tbb::blocked_range<int>(0, num_measurement_points_),
                           [this, &_s, &lidar_to_imu_translation, &lidar_to_imu_rotation](const tbb::blocked_range<int> &_range)
-                          {
-                              for (int index = _range.begin(); index != _range.end(); ++index)
-                              {
-                                  const LidarPoint &point_body = points_voxel_lidar_->points[index];
-                                  const Eigen::Vector3d point_lidar(point_body.x, point_body.y, point_body.z);
-                                  const Eigen::Vector3d point_global = _s.rotation_ *
-                                                                           (lidar_to_imu_rotation * point_lidar + lidar_to_imu_translation) +
-                                                                       _s.position_;
-                                  BievrMeasurement measurement;
-                                  if (!bievr_map_.sample(point_global, measurement))
-                                  {
-                                      continue;
-                                  }
+        {
+            for (int index = _range.begin(); index != _range.end(); ++index)
+            {
+                const LidarPoint &point_body = points_voxel_lidar_->points[index];
+                const Eigen::Vector3d point_lidar(point_body.x, point_body.y, point_body.z);
+                const Eigen::Vector3d point_global = _s.rotation_ *
+                                                         (lidar_to_imu_rotation * point_lidar + lidar_to_imu_translation) +
+                                                     _s.position_;
+                BievrMeasurement measurement;
+                if (!bievr_map_.sample(point_global, measurement))
+                {
+                    continue;
+                }
 
-                                  const double absolute_residual = std::abs(measurement.residual_);
-                                  const double robust_weight = absolute_residual <= huber_delta_ ? 1.0 : huber_delta_ / absolute_residual;
-                                  const double square_root_weight = std::sqrt(robust_weight);
-                                  measurement.position_jacobian_ *= square_root_weight;
-                                  measurement.residual_ *= square_root_weight;
-                                  point_measurements_[index] = measurement;
-                                  point_has_valid_measurement_[index] = 1U;
-                              }
-                          });
-        //clang-format on
+                const double absolute_residual = std::abs(measurement.residual_);
+                const double robust_weight = absolute_residual <= huber_delta_ ? 1.0 : huber_delta_ / absolute_residual;
+                const double square_root_weight = std::sqrt(robust_weight);
+                measurement.position_jacobian_ *= square_root_weight;
+                measurement.residual_ *= square_root_weight;
+                point_measurements_[index] = measurement;
+                point_has_valid_measurement_[index] = 1U;
+            }
+        });
 
         num_effective_points_ = 0;
         effective_measurements_.clear();
@@ -501,24 +497,22 @@ private:
         _measurement_data.jacobian_.setZero(num_effective_points_, kMeasurementStateDim);
         _measurement_data.residual_.resize(num_effective_points_);
 
-        //clang-format off
         tbb::parallel_for(tbb::blocked_range<int>(0, num_effective_points_),
                           [this, &_s, &_measurement_data, &lidar_to_imu_translation, &lidar_to_imu_rotation](const tbb::blocked_range<int> &_range)
-                          {
-                              for (int index = _range.begin(); index != _range.end(); ++index)
-                              {
-                                  const LidarPoint &laser_point = points_voxel_lidar_effective_->points[index];
-                                  const Eigen::Vector3d point_lidar(laser_point.x, laser_point.y, laser_point.z);
-                                  const Eigen::Vector3d point_imu = lidar_to_imu_rotation * point_lidar + lidar_to_imu_translation;
-                                  const Eigen::Matrix3d point_imu_cross = lie::hat(point_imu);
+        {
+            for (int index = _range.begin(); index != _range.end(); ++index)
+            {
+                const LidarPoint &laser_point = points_voxel_lidar_effective_->points[index];
+                const Eigen::Vector3d point_lidar(laser_point.x, laser_point.y, laser_point.z);
+                const Eigen::Vector3d point_imu = lidar_to_imu_rotation * point_lidar + lidar_to_imu_translation;
+                const Eigen::Matrix3d point_imu_cross = lie::hat(point_imu);
 
-                                  const BievrMeasurement &measurement = effective_measurements_[index];
-                                  const Eigen::RowVector3d rotation_jacobian = measurement.position_jacobian_ * (-_s.rotation_.toRotationMatrix() * point_imu_cross);
-                                  _measurement_data.jacobian_.block<1, kMeasurementStateDim>(index, 0) << measurement.position_jacobian_, rotation_jacobian;
-                                  _measurement_data.residual_(index) = -measurement.residual_;
-                              }
-                          });
-        //clang-format on
+                const BievrMeasurement &measurement = effective_measurements_[index];
+                const Eigen::RowVector3d rotation_jacobian = measurement.position_jacobian_ * (-_s.rotation_.toRotationMatrix() * point_imu_cross);
+                _measurement_data.jacobian_.block<1, kMeasurementStateDim>(index, 0) << measurement.position_jacobian_, rotation_jacobian;
+                _measurement_data.residual_(index) = -measurement.residual_;
+            }
+        });
     }
 
 public:
@@ -562,13 +556,12 @@ public:
         const bool valid_extrinsic_dimensions = lidar_to_imu_translation_values.size() == 3U && lidar_to_imu_rotation_values.size() == 9U;
         const bool finite_extrinsic_values = valid_extrinsic_dimensions &&
                                              std::all_of(lidar_to_imu_translation_values.begin(), lidar_to_imu_translation_values.end(), [](const double _value)
-                                                         {
-                                                             return std::isfinite(_value);
-                                                         }) &&
-                                             std::all_of(lidar_to_imu_rotation_values.begin(), lidar_to_imu_rotation_values.end(), [](const double _value)
-                                                         {
-                                                             return std::isfinite(_value);
-                                                         });
+        {
+            return std::isfinite(_value);
+        }) && std::all_of(lidar_to_imu_rotation_values.begin(), lidar_to_imu_rotation_values.end(), [](const double _value)
+        {
+            return std::isfinite(_value);
+        });
         if (!finite_extrinsic_values)
         {
             RCLCPP_FATAL(node->get_logger(),
@@ -670,25 +663,25 @@ public:
             sub_livox = node->create_subscription<livox_ros_driver2::msg::CustomMsg>(lidar_topic_,
                                                                                      lidar_sensor_qos,
                                                                                      [this](const livox_ros_driver2::msg::CustomMsg::ConstSharedPtr _message)
-                                                                                     {
-                                                                                         pcdLivoxCallback(_message);
-                                                                                     });
+            {
+                pcdLivoxCallback(_message);
+            });
         }
         else
         {
             sub_pcl = node->create_subscription<sensor_msgs::msg::PointCloud2>(lidar_topic_,
                                                                                lidar_sensor_qos,
                                                                                [this](const sensor_msgs::msg::PointCloud2::ConstSharedPtr _message)
-                                                                               {
-                                                                                   pcdCallback(_message);
-                                                                               });
+            {
+                pcdCallback(_message);
+            });
         }
         auto sub_imu = node->create_subscription<sensor_msgs::msg::Imu>(imu_topic_,
                                                                         imu_sensor_qos,
                                                                         [this](const sensor_msgs::msg::Imu::ConstSharedPtr _message)
-                                                                        {
-                                                                            imuCallback(_message);
-                                                                        });
+        {
+            imuCallback(_message);
+        });
         const auto publisher_qos = rclcpp::QoS(100000);
         auto pub_laser_cloud_full = node->create_publisher<sensor_msgs::msg::PointCloud2>("/cloud_registered",
                                                                                           publisher_qos);
