@@ -354,14 +354,23 @@ public:
                            hashed_points.end(),
                            [](const HashedPoint &_left, const HashedPoint &_right)
         {
+            // Canonicalize all values consumed by map accumulation. Equal x alone
+            // leaves distinct points equivalent to parallel_sort and makes the
+            // floating-point accumulation depend on their arrival/sort order.
             const auto left_key = std::tuple(_left.key_.x_,
                                              _left.key_.y_,
                                              _left.key_.z_,
-                                             _left.point_.x());
+                                             _left.point_.x(),
+                                             _left.point_.y(),
+                                             _left.point_.z(),
+                                             _left.point_.w());
             const auto right_key = std::tuple(_right.key_.x_,
                                               _right.key_.y_,
                                               _right.key_.z_,
-                                              _right.point_.x());
+                                              _right.point_.x(),
+                                              _right.point_.y(),
+                                              _right.point_.z(),
+                                              _right.point_.w());
             return left_key < right_key;
         });
 
